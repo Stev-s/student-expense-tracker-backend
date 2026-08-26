@@ -233,8 +233,8 @@ const loginUser = (req, res) => {
                     process.env.JWT_SECRET,
 
                     {
-                        expiresIn:
-                            process.env.JWT_EXPIRES_IN
+                        // CHANGE THIS TO 10s FOR TESTING
+                        expiresIn: "10s"
                     }
 
                 );
