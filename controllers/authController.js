@@ -234,7 +234,7 @@ const loginUser = (req, res) => {
 
                     {
                         // CHANGE THIS TO 10s FOR TESTING
-                        expiresIn: "10s"
+                        expiresIn: "10m"
                     }
 
                 );
