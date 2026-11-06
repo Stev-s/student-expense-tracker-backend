@@ -11,6 +11,8 @@ const {
     registerUser,
     loginUser,
     updateProfile,
+    updateProfilePicture,
+    uploadProfilePicture,
     changePassword,
     forgotPassword,
     resetPassword
@@ -93,6 +95,16 @@ router.put(
     updateProfile
 );
 
+// =====================================================
+// UPLOAD PROFILE PICTURE
+// =====================================================
+
+router.post(
+    "/profile-picture",
+    authMiddleware,
+    uploadProfilePicture,
+    updateProfilePicture
+);
 
 // =====================================================
 // CHANGE PASSWORD

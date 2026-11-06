@@ -95,12 +95,70 @@ const deleteBudget = (id, user_id, callback) => {
 
 };
 
+// ================= GET CURRENT MONTH BUDGET STATUS =================
+
+const getCurrentBudgetStatus = (
+    user_id,
+    monthName,
+    monthNumber,
+    year,
+    callback
+) => {
+    const sql = `
+        SELECT
+            b.id AS budget_id,
+            b.month,
+            b.year,
+            b.budget_amount,
+            COALESCE(SUM(
+                CASE
+                    WHEN c.type = 'Expense' THEN t.amount
+                    ELSE 0
+                END
+            ), 0) AS total_expenses
+        FROM budgets b
+        LEFT JOIN transactions t
+            ON t.user_id = b.user_id
+            AND YEAR(t.transaction_date) = b.year
+            AND MONTH(t.transaction_date) = ?
+        LEFT JOIN categories c
+            ON c.id = t.category_id
+            AND c.type = 'Expense'
+        WHERE b.user_id = ?
+            AND b.year = ?
+            AND (
+                LOWER(TRIM(b.month)) = LOWER(?)
+                OR CAST(b.month AS UNSIGNED) = ?
+            )
+        GROUP BY
+            b.id,
+            b.month,
+            b.year,
+            b.budget_amount
+        ORDER BY b.id DESC
+        LIMIT 1
+    `;
+
+    db.query(
+        sql,
+        [
+            monthNumber,
+            user_id,
+            year,
+            monthName,
+            monthNumber
+        ],
+        callback
+    );
+};
+
 module.exports = {
 
     createBudget,
     getBudgets,
     getBudgetById,
     updateBudget,
-    deleteBudget
+    deleteBudget,
+    getCurrentBudgetStatus
 
 };

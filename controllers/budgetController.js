@@ -195,10 +195,87 @@ const deleteBudget = (req, res) => {
 
 };
 
+// ================= GET CURRENT MONTH BUDGET ALERT =================
+
+const getCurrentBudgetAlert = (req, res) => {
+    const user_id = req.user.id;
+
+    const now = new Date();
+    const monthNumber = now.getMonth() + 1;
+    const monthName = now.toLocaleString("en-US", {
+        month: "long"
+    });
+    const year = now.getFullYear();
+
+    Budget.getCurrentBudgetStatus(
+        user_id,
+        monthName,
+        monthNumber,
+        year,
+        (err, results) => {
+            if (err) {
+                console.error("Budget alert calculation error:", err);
+
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to calculate budget status."
+                });
+            }
+
+            if (!results || results.length === 0) {
+                return res.status(200).json({
+                    success: true,
+                    has_budget: false,
+                    message: "No budget has been set for the current month."
+                });
+            }
+
+            const budget = results[0];
+            const budgetAmount = Number(budget.budget_amount);
+            const totalExpenses = Number(budget.total_expenses);
+            const percentage = budgetAmount > 0
+                ? (totalExpenses / budgetAmount) * 100
+                : 0;
+
+            let alert = null;
+
+            if (percentage >= 100) {
+                alert = {
+                    level: "exceeded",
+                    title: "Budget reached or exceeded",
+                    message: `You have spent ${percentage.toFixed(1)}% of your monthly budget.`
+                };
+            } else if (percentage >= 80) {
+                alert = {
+                    level: "warning",
+                    title: "Budget warning",
+                    message: `You have used ${percentage.toFixed(1)}% of your monthly budget.`
+                };
+            }
+
+            return res.status(200).json({
+                success: true,
+                has_budget: true,
+                budget: {
+                    id: budget.budget_id,
+                    month: budget.month,
+                    year: budget.year,
+                    budget_amount: budgetAmount,
+                    total_expenses: totalExpenses,
+                    remaining: budgetAmount - totalExpenses,
+                    percentage_used: Number(percentage.toFixed(2))
+                },
+                alert
+            });
+        }
+    );
+};
+
 module.exports = {
     addBudget,
     getBudgets,
     getBudget,
     updateBudget,
-    deleteBudget
+    deleteBudget,
+    getCurrentBudgetAlert
 };

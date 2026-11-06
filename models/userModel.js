@@ -100,6 +100,25 @@ const updateProfile = (
 
 };
 
+// =====================================================
+// UPDATE PROFILE PICTURE
+// =====================================================
+
+const updateProfilePicture = (userId, picturePath, callback) => {
+
+    const sql = `
+        UPDATE users
+        SET profile_picture = ?
+        WHERE id = ?
+    `;
+
+    db.query(
+        sql,
+        [picturePath, userId],
+        callback
+    );
+
+};
 
 // =====================================================
 // UPDATE PASSWORD
@@ -225,6 +244,8 @@ module.exports = {
     findById,
 
     updateProfile,
+    
+    updateProfilePicture,
 
     updatePassword,
 

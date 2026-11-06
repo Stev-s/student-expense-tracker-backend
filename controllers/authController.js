@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const User = require("../models/userModel");
 
@@ -260,8 +263,9 @@ const loginUser = (req, res) => {
                         user.email,
 
                     phone:
-                        user.phone
-
+                        user.phone,
+                    profile_picture: 
+                    user.profile_picture || null
                 }
 
             });
@@ -436,8 +440,10 @@ const updateProfile = (req, res) => {
                                 cleanEmail,
 
                             phone:
-                                cleanPhone
-
+                                cleanPhone,
+                            profile_picture: results.length > 0
+        ? results[0].profile_picture || null
+        : null
                         }
 
                     });
@@ -1107,7 +1113,123 @@ const resetPassword = async (req, res) => {
 
 };
 
+// =====================================================
+// PROFILE PICTURE UPLOAD CONFIGURATION
+// =====================================================
 
+const uploadDirectory = path.join(
+    __dirname,
+    "../uploads/profile-pictures"
+);
+
+if (!fs.existsSync(uploadDirectory)) {
+    fs.mkdirSync(uploadDirectory, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+
+    destination: (req, file, callback) => {
+        callback(null, uploadDirectory);
+    },
+
+    filename: (req, file, callback) => {
+
+        const extension = path.extname(file.originalname).toLowerCase();
+
+        const filename = `user-${req.user.id}-${Date.now()}${extension}`;
+
+        callback(null, filename);
+    }
+
+});
+
+const uploadProfilePicture = multer({
+
+    storage,
+
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+
+    fileFilter: (req, file, callback) => {
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!allowedTypes.includes(file.mimetype)) {
+            return callback(
+                new Error("Only JPG, PNG and WEBP images are allowed.")
+            );
+        }
+
+        callback(null, true);
+    }
+
+}).single("profile_picture");
+
+// =====================================================
+// UPDATE PROFILE PICTURE
+// =====================================================
+
+const updateProfilePicture = (req, res) => {
+
+    const userId = req.user.id;
+
+    if (!req.file) {
+        return res.status(400).json({
+            success: false,
+            message: "Please select a profile picture."
+        });
+    }
+
+    const picturePath =
+        `/uploads/profile-pictures/${req.file.filename}`;
+
+    User.updateProfilePicture(
+        userId,
+        picturePath,
+        (err, result) => {
+
+            if (err) {
+
+                // Remove uploaded file if database update fails
+                fs.unlink(req.file.path, () => {});
+
+                return res.status(500).json({
+                    success: false,
+                    message: err.message
+                });
+
+            }
+
+            if (!result || result.affectedRows === 0) {
+
+                fs.unlink(req.file.path, () => {});
+
+                return res.status(404).json({
+                    success: false,
+                    message: "User account not found."
+                });
+
+            }
+
+            return res.status(200).json({
+
+                success: true,
+
+                message: "Profile picture updated successfully.",
+
+                profile_picture: picturePath
+
+            });
+
+        }
+    );
+
+};
 
 // =====================================================
 // EXPORT
@@ -1120,6 +1242,10 @@ module.exports = {
     loginUser,
 
     updateProfile,
+
+    uploadProfilePicture,
+
+    updateProfilePicture,
 
     changePassword,
 

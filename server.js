@@ -10,6 +10,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const reportsRoutes = require("./routes/reportsRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const errorHandler = require("./middleware/errorHandler");
+const pushRoutes = require("./routes/pushRoutes");
 
 const app = express();
 
@@ -22,6 +23,15 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/budgets", budgetRoutes);
+app.use("/api/push", pushRoutes);
+
+// Serve uploaded profile pictures
+const path = require("path");
+
+app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "uploads"))
+);
 
 app.get("/", (req, res) => {
 

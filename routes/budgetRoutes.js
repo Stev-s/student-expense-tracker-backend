@@ -15,7 +15,8 @@ const {
     getBudgets,
     getBudget,
     updateBudget,
-    deleteBudget
+    deleteBudget,
+    getCurrentBudgetAlert
 
 } = require("../controllers/budgetController");
 
@@ -35,6 +36,14 @@ router.get(
     "/",
     verifyToken,
     getBudgets
+);
+
+// ================= GET CURRENT MONTH BUDGET ALERT =================
+
+router.get(
+    "/alerts/current",
+    verifyToken,
+    getCurrentBudgetAlert
 );
 
 // ================= GET ONE =================
@@ -62,5 +71,7 @@ router.delete(
     verifyToken,
     deleteBudget
 );
+
+
 
 module.exports = router;
